@@ -34,6 +34,9 @@ document.addEventListener("DOMContentLoaded", () => {
     technology: { label: "Technology", color: "#e8eaf6", textColor: "#3949ab" },
   };
 
+  // School name constant for sharing
+  const SCHOOL_NAME = "Mergington High School";
+
   // State for activities and filters
   let allActivities = {};
   let currentFilter = "all";
@@ -472,6 +475,13 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // Helper function to escape HTML to prevent XSS
+  function escapeHtml(text) {
+    const div = document.createElement("div");
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
   // Function to render a single activity card
   function renderActivityCard(name, details) {
     const activityCard = document.createElement("div");
@@ -498,6 +508,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Format the schedule using the new helper function
     const formattedSchedule = formatSchedule(details);
+
+    // Escape values for safe use in HTML attributes
+    const escapedName = escapeHtml(name);
+    const escapedDescription = escapeHtml(details.description);
+    const escapedSchedule = escapeHtml(formattedSchedule);
 
     // Create activity tag
     const tagHtml = `
@@ -552,6 +567,20 @@ document.addEventListener("DOMContentLoaded", () => {
             .join("")}
         </ul>
       </div>
+      <div class="share-buttons">
+        <button class="share-button share-twitter" data-activity="${escapedName}" data-description="${escapedDescription}" data-schedule="${escapedSchedule}" title="Share on Twitter" aria-label="Share ${escapedName} on Twitter">
+          <span class="share-icon" aria-hidden="true">🐦</span>
+        </button>
+        <button class="share-button share-facebook" data-activity="${escapedName}" data-description="${escapedDescription}" data-schedule="${escapedSchedule}" title="Share on Facebook" aria-label="Share ${escapedName} on Facebook">
+          <span class="share-icon" aria-hidden="true">📘</span>
+        </button>
+        <button class="share-button share-email" data-activity="${escapedName}" data-description="${escapedDescription}" data-schedule="${escapedSchedule}" title="Share via Email" aria-label="Share ${escapedName} via Email">
+          <span class="share-icon" aria-hidden="true">✉️</span>
+        </button>
+        <button class="share-button share-link" data-activity="${escapedName}" data-description="${escapedDescription}" data-schedule="${escapedSchedule}" title="Copy Link" aria-label="Copy link to ${escapedName}">
+          <span class="share-icon" aria-hidden="true">🔗</span>
+        </button>
+      </div>
       <div class="activity-card-actions">
         ${
           currentUser
@@ -586,6 +615,12 @@ document.addEventListener("DOMContentLoaded", () => {
         });
       }
     }
+
+    // Add click handlers for share buttons
+    const shareButtons = activityCard.querySelectorAll(".share-button");
+    shareButtons.forEach((button) => {
+      button.addEventListener("click", handleShare);
+    });
 
     activitiesList.appendChild(activityCard);
   }
@@ -809,6 +844,80 @@ document.addEventListener("DOMContentLoaded", () => {
     setTimeout(() => {
       messageDiv.classList.add("hidden");
     }, 5000);
+  }
+
+  // Handle social sharing
+  function handleShare(event) {
+    const button = event.currentTarget;
+    const activityName = button.dataset.activity;
+    const description = button.dataset.description;
+    const schedule = button.dataset.schedule;
+
+    // Build a clean share URL (remove hash and query parameters for cleaner sharing)
+    const shareUrl = `${window.location.origin}${window.location.pathname}`;
+    const shareText = `Check out ${activityName} at ${SCHOOL_NAME}! ${description} - ${schedule}`;
+
+    if (button.classList.contains("share-twitter")) {
+      // Share on Twitter
+      const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
+        shareText
+      )}&url=${encodeURIComponent(shareUrl)}`;
+      window.open(twitterUrl, "_blank", "width=600,height=400");
+    } else if (button.classList.contains("share-facebook")) {
+      // Share on Facebook
+      const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
+        shareUrl
+      )}&quote=${encodeURIComponent(shareText)}`;
+      window.open(facebookUrl, "_blank", "width=600,height=400");
+    } else if (button.classList.contains("share-email")) {
+      // Share via Email
+      const subject = `Check out ${activityName}`;
+      const body = `${shareText}\n\nVisit: ${shareUrl}`;
+      window.location.href = `mailto:?subject=${encodeURIComponent(
+        subject
+      )}&body=${encodeURIComponent(body)}`;
+    } else if (button.classList.contains("share-link")) {
+      // Copy link to clipboard with fallback
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        // Modern clipboard API
+        navigator.clipboard
+          .writeText(shareUrl)
+          .then(() => {
+            showMessage("Link copied to clipboard!", "success");
+          })
+          .catch((err) => {
+            console.error("Failed to copy link:", err);
+            fallbackCopyToClipboard(shareUrl);
+          });
+      } else {
+        // Fallback for older browsers
+        fallbackCopyToClipboard(shareUrl);
+      }
+    }
+  }
+
+  // Fallback method for copying to clipboard
+  function fallbackCopyToClipboard(text) {
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    textArea.style.position = "fixed";
+    textArea.style.left = "-999999px";
+    textArea.style.top = "-999999px";
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    try {
+      const successful = document.execCommand("copy");
+      if (successful) {
+        showMessage("Link copied to clipboard!", "success");
+      } else {
+        showMessage("Failed to copy link. Please copy manually: " + text, "error");
+      }
+    } catch (err) {
+      console.error("Failed to copy link:", err);
+      showMessage("Failed to copy link. Please copy manually: " + text, "error");
+    }
+    document.body.removeChild(textArea);
   }
 
   // Handle form submission
