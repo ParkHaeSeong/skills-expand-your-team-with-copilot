@@ -40,7 +40,8 @@ document.addEventListener("DOMContentLoaded", () => {
       themeIcon.textContent = "🌙";
     } else {
       // No saved preference, check system preference
-      if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)');
+      if (prefersDarkScheme.matches) {
         document.body.classList.add("dark-mode");
         themeIcon.textContent = "☀️";
       }
