@@ -34,6 +34,9 @@ document.addEventListener("DOMContentLoaded", () => {
     technology: { label: "Technology", color: "#e8eaf6", textColor: "#3949ab" },
   };
 
+  // School name constant for sharing
+  const SCHOOL_NAME = "Mergington High School";
+
   // State for activities and filters
   let allActivities = {};
   let currentFilter = "all";
@@ -506,6 +509,11 @@ document.addEventListener("DOMContentLoaded", () => {
     // Format the schedule using the new helper function
     const formattedSchedule = formatSchedule(details);
 
+    // Escape values for safe use in HTML attributes
+    const escapedName = escapeHtml(name);
+    const escapedDescription = escapeHtml(details.description);
+    const escapedSchedule = escapeHtml(formattedSchedule);
+
     // Create activity tag
     const tagHtml = `
       <span class="activity-tag" style="background-color: ${typeInfo.color}; color: ${typeInfo.textColor}">
@@ -560,33 +568,17 @@ document.addEventListener("DOMContentLoaded", () => {
         </ul>
       </div>
       <div class="share-buttons">
-        <button class="share-button share-twitter" data-activity="${escapeHtml(
-          name
-        )}" data-description="${escapeHtml(
-      details.description
-    )}" data-schedule="${escapeHtml(formattedSchedule)}" title="Share on Twitter">
-          <span class="share-icon">🐦</span>
+        <button class="share-button share-twitter" data-activity="${escapedName}" data-description="${escapedDescription}" data-schedule="${escapedSchedule}" title="Share on Twitter" aria-label="Share ${escapedName} on Twitter">
+          <span class="share-icon" aria-hidden="true">🐦</span>
         </button>
-        <button class="share-button share-facebook" data-activity="${escapeHtml(
-          name
-        )}" data-description="${escapeHtml(
-      details.description
-    )}" data-schedule="${escapeHtml(formattedSchedule)}" title="Share on Facebook">
-          <span class="share-icon">📘</span>
+        <button class="share-button share-facebook" data-activity="${escapedName}" data-description="${escapedDescription}" data-schedule="${escapedSchedule}" title="Share on Facebook" aria-label="Share ${escapedName} on Facebook">
+          <span class="share-icon" aria-hidden="true">📘</span>
         </button>
-        <button class="share-button share-email" data-activity="${escapeHtml(
-          name
-        )}" data-description="${escapeHtml(
-      details.description
-    )}" data-schedule="${escapeHtml(formattedSchedule)}" title="Share via Email">
-          <span class="share-icon">✉️</span>
+        <button class="share-button share-email" data-activity="${escapedName}" data-description="${escapedDescription}" data-schedule="${escapedSchedule}" title="Share via Email" aria-label="Share ${escapedName} via Email">
+          <span class="share-icon" aria-hidden="true">✉️</span>
         </button>
-        <button class="share-button share-link" data-activity="${escapeHtml(
-          name
-        )}" data-description="${escapeHtml(
-      details.description
-    )}" data-schedule="${escapeHtml(formattedSchedule)}" title="Copy Link">
-          <span class="share-icon">🔗</span>
+        <button class="share-button share-link" data-activity="${escapedName}" data-description="${escapedDescription}" data-schedule="${escapedSchedule}" title="Copy Link" aria-label="Copy link to ${escapedName}">
+          <span class="share-icon" aria-hidden="true">🔗</span>
         </button>
       </div>
       <div class="activity-card-actions">
@@ -863,7 +855,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Build a clean share URL (remove hash and query parameters for cleaner sharing)
     const shareUrl = `${window.location.origin}${window.location.pathname}`;
-    const shareText = `Check out ${activityName} at Mergington High School! ${description} - ${schedule}`;
+    const shareText = `Check out ${activityName} at ${SCHOOL_NAME}! ${description} - ${schedule}`;
 
     if (button.classList.contains("share-twitter")) {
       // Share on Twitter
@@ -914,7 +906,6 @@ document.addEventListener("DOMContentLoaded", () => {
     document.body.appendChild(textArea);
     textArea.focus();
     textArea.select();
-    
     try {
       const successful = document.execCommand("copy");
       if (successful) {
@@ -926,7 +917,6 @@ document.addEventListener("DOMContentLoaded", () => {
       console.error("Failed to copy link:", err);
       showMessage("Failed to copy link. Please copy manually: " + text, "error");
     }
-    
     document.body.removeChild(textArea);
   }
 
