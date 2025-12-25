@@ -35,6 +35,15 @@ document.addEventListener("DOMContentLoaded", () => {
     if (savedTheme === "dark") {
       document.body.classList.add("dark-mode");
       themeIcon.textContent = "☀️";
+    } else if (savedTheme === "light") {
+      document.body.classList.remove("dark-mode");
+      themeIcon.textContent = "🌙";
+    } else {
+      // No saved preference, check system preference
+      if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.body.classList.add("dark-mode");
+        themeIcon.textContent = "☀️";
+      }
     }
   }
 
