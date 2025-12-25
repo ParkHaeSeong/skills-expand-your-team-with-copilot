@@ -472,6 +472,13 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // Helper function to escape HTML to prevent XSS
+  function escapeHtml(text) {
+    const div = document.createElement("div");
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
   // Function to render a single activity card
   function renderActivityCard(name, details) {
     const activityCard = document.createElement("div");
@@ -553,16 +560,32 @@ document.addEventListener("DOMContentLoaded", () => {
         </ul>
       </div>
       <div class="share-buttons">
-        <button class="share-button share-twitter" data-activity="${name}" data-description="${details.description}" data-schedule="${formattedSchedule}" title="Share on Twitter">
+        <button class="share-button share-twitter" data-activity="${escapeHtml(
+          name
+        )}" data-description="${escapeHtml(
+      details.description
+    )}" data-schedule="${escapeHtml(formattedSchedule)}" title="Share on Twitter">
           <span class="share-icon">🐦</span>
         </button>
-        <button class="share-button share-facebook" data-activity="${name}" data-description="${details.description}" data-schedule="${formattedSchedule}" title="Share on Facebook">
+        <button class="share-button share-facebook" data-activity="${escapeHtml(
+          name
+        )}" data-description="${escapeHtml(
+      details.description
+    )}" data-schedule="${escapeHtml(formattedSchedule)}" title="Share on Facebook">
           <span class="share-icon">📘</span>
         </button>
-        <button class="share-button share-email" data-activity="${name}" data-description="${details.description}" data-schedule="${formattedSchedule}" title="Share via Email">
+        <button class="share-button share-email" data-activity="${escapeHtml(
+          name
+        )}" data-description="${escapeHtml(
+      details.description
+    )}" data-schedule="${escapeHtml(formattedSchedule)}" title="Share via Email">
           <span class="share-icon">✉️</span>
         </button>
-        <button class="share-button share-link" data-activity="${name}" data-description="${details.description}" data-schedule="${formattedSchedule}" title="Copy Link">
+        <button class="share-button share-link" data-activity="${escapeHtml(
+          name
+        )}" data-description="${escapeHtml(
+      details.description
+    )}" data-schedule="${escapeHtml(formattedSchedule)}" title="Copy Link">
           <span class="share-icon">🔗</span>
         </button>
       </div>
@@ -838,8 +861,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const description = button.dataset.description;
     const schedule = button.dataset.schedule;
 
-    // Build the share URL and text
-    const shareUrl = window.location.href;
+    // Build a clean share URL (remove hash and query parameters for cleaner sharing)
+    const shareUrl = `${window.location.origin}${window.location.pathname}`;
     const shareText = `Check out ${activityName} at Mergington High School! ${description} - ${schedule}`;
 
     if (button.classList.contains("share-twitter")) {
@@ -862,17 +885,49 @@ document.addEventListener("DOMContentLoaded", () => {
         subject
       )}&body=${encodeURIComponent(body)}`;
     } else if (button.classList.contains("share-link")) {
-      // Copy link to clipboard
-      navigator.clipboard
-        .writeText(shareUrl)
-        .then(() => {
-          showMessage("Link copied to clipboard!", "success");
-        })
-        .catch((err) => {
-          console.error("Failed to copy link:", err);
-          showMessage("Failed to copy link", "error");
-        });
+      // Copy link to clipboard with fallback
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        // Modern clipboard API
+        navigator.clipboard
+          .writeText(shareUrl)
+          .then(() => {
+            showMessage("Link copied to clipboard!", "success");
+          })
+          .catch((err) => {
+            console.error("Failed to copy link:", err);
+            fallbackCopyToClipboard(shareUrl);
+          });
+      } else {
+        // Fallback for older browsers
+        fallbackCopyToClipboard(shareUrl);
+      }
     }
+  }
+
+  // Fallback method for copying to clipboard
+  function fallbackCopyToClipboard(text) {
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    textArea.style.position = "fixed";
+    textArea.style.left = "-999999px";
+    textArea.style.top = "-999999px";
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    
+    try {
+      const successful = document.execCommand("copy");
+      if (successful) {
+        showMessage("Link copied to clipboard!", "success");
+      } else {
+        showMessage("Failed to copy link. Please copy manually: " + text, "error");
+      }
+    } catch (err) {
+      console.error("Failed to copy link:", err);
+      showMessage("Failed to copy link. Please copy manually: " + text, "error");
+    }
+    
+    document.body.removeChild(textArea);
   }
 
   // Handle form submission
